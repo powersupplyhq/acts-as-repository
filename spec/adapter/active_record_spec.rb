@@ -105,20 +105,149 @@ RSpec.describe ActsAsRepository::Adapter::ActiveRecord do
   end
 
   describe "#update" do
+    context "with an invalid entity" do
+      it "raises an error" do
+        expect{ adapter.update(OpenStruct.new(foo: "bar")) }.to raise_error(ArgumentError)
+      end
+    end
+
+    context "success" do
+      before{ RepoUser.create!(first_name: "Axel", last_name: "Asher") }
+      let(:model){ RepoUser.last }
+      let(:entity) do
+        e = adapter.convert_to_entity(model)
+        e.first_name = "Barry"
+        e.last_name = "Allen"
+        e
+      end
+
+      it "returns the updated entity" do
+        updated_entity = adapter.update(entity)
+        expect(updated_entity.id).to eq(RepoUser.last.id)
+        expect(updated_entity.first_name).to eq(RepoUser.last.first_name)
+        expect(updated_entity.last_name).to eq(RepoUser.last.last_name)
+      end
+    end
+
+    context "persistence at the AR level fails" do
+      before do
+        allow_any_instance_of(RepoUser).to receive(:update!).and_raise(ActiveRecord::RecordNotSaved)
+        RepoUser.create!(first_name: "Axel", last_name: "Asher")
+      end
+      let(:model){ RepoUser.last }
+      let(:entity) do
+        e = adapter.convert_to_entity(model)
+        e.first_name = "Barry"
+        e.last_name = "Allen"
+        e
+      end
+
+      it "raises an error" do
+        expect{ adapter.update(entity) }.to raise_error(ActsAsRepository::PersistenceFailedError)
+      end
+    end
   end
 
   describe "#delete" do
+    context "with an invalid entity" do
+      it "raises an error" do
+        expect{ adapter.delete(OpenStruct.new(foo: "bar")) }.to raise_error(ArgumentError)
+      end
+    end
+
+    context "success" do
+      before{ RepoUser.create!(first_name: "Axel", last_name: "Asher") }
+      let(:model){ RepoUser.last }
+      let(:entity){ adapter.convert_to_entity(model) }
+
+      it "returns the destroyed entity without an id" do
+        model = RepoUser.last
+        updated_entity = adapter.delete(entity)
+        expect(updated_entity.id).to eq(nil)
+        expect(updated_entity.first_name).to eq(model.first_name)
+        expect(updated_entity.last_name).to eq(model.last_name)
+      end
+    end
+
+    context "persistence at the AR level fails" do
+      before do
+        allow_any_instance_of(RepoUser).to receive(:destroy).and_return(false)
+        RepoUser.create!(first_name: "Axel", last_name: "Asher")
+      end
+      let(:model){ RepoUser.last }
+      let(:entity){ adapter.convert_to_entity(model) }
+
+      it "raises an error" do
+        expect{ adapter.delete(entity) }.to raise_error(ActsAsRepository::PersistenceFailedError)
+      end
+    end
   end
 
   describe "#first" do
+    context "no models exist" do
+      it "returns nil" do
+        expect(adapter.first).to eq(nil)
+      end
+    end
+
+    context "models exist" do
+      before{ RepoUser.create!(first_name: "Axel", last_name: "Asher") }
+
+      it "returns an entity representing the first model" do
+        result = adapter.first
+        expect(result.id).to eq(RepoUser.first.id)
+      end
+    end
   end
 
   describe "#last" do
+    context "no models exist" do
+      it "returns nil" do
+        expect(adapter.last).to eq(nil)
+      end
+    end
+
+    context "models exist" do
+      before{ 2.times{ RepoUser.create!(first_name: "Axel", last_name: "Asher") } }
+
+      it "returns an entity representing the last model" do
+        result = adapter.last
+        expect(result.id).to eq(RepoUser.last.id)
+      end
+    end
   end
 
   describe "#all" do
+    context "no models exist" do
+      it "returns an empty array" do
+        expect(adapter.all).to be_empty
+      end
+    end
+
+    context "models exist" do
+      before{ 2.times{ RepoUser.create!(first_name: "Axel", last_name: "Asher") } }
+
+      it "returns a collection of entities for each model" do
+        result = adapter.all
+        expect(result[0].id).to eq(RepoUser.first.id)
+        expect(result[1].id).to eq(RepoUser.last.id)
+      end
+    end
   end
 
   describe "#count" do
+    context "no models exist" do
+      it "returns 0" do
+        expect(adapter.count).to eq(0)
+      end
+    end
+
+    context "models exist" do
+      before{ 2.times{ RepoUser.create!(first_name: "Axel", last_name: "Asher") } }
+
+      it "returns the number of models in the DB" do
+        expect(adapter.count).to eq(2)
+      end
+    end
   end
 end

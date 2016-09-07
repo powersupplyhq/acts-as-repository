@@ -2,6 +2,7 @@ $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 require "acts_as_repository"
 require "active_support"
 require "active_record"
+require "pry"
 
 RSpec.configure do |config|
   config.after(:each) do

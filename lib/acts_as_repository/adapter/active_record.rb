@@ -65,7 +65,7 @@ module ActsAsRepository
         model = base_find(entity.id)
 
         begin
-          model.update(entity.attributes)
+          model.update!(entity.attributes)
         rescue StandardError => e
           raise ActsAsRepository::PersistenceFailedError.new("the record failed to save")
         end
@@ -76,16 +76,23 @@ module ActsAsRepository
       def delete(entity)
         enforce_valid_entity!(entity)
         model = base_find(entity.id)
-        model.destroy
+        unless model.destroy
+          raise ActsAsRepository::PersistenceFailedError.new("the record failed to delete")
+        end
+        entity.id = nil
         entity
       end
 
       def first
-        convert_to_entity(@model_class.first)
+        model = @model_class.first
+        return model if model.nil?
+        convert_to_entity(model)
       end
 
       def last
-        convert_to_entity(@model_class.last)
+        model = @model_class.last
+        return model if model.nil?
+        convert_to_entity(model)
       end
 
       def all

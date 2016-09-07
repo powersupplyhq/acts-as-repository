@@ -10,10 +10,14 @@ module ActsAsRepository
         if @value.respond_to?(:to_s)
           @value.to_s
         else
-          raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to #{type}")
+          raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to String")
         end
       when "Integer"
-        @value.to_i
+        if @value.respond_to?(:to_i)
+          @value.to_i
+        else
+          raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to Integer")
+        end
       when "BigDecimal"
         to_big_decimal
       when "Boolean"
@@ -23,11 +27,15 @@ module ActsAsRepository
       end
     end
 
+    private
+
     def to_big_decimal
       return @value if @value.is_a?(BigDecimal)
 
       if @value.is_a?(String)
         BigDecimal.new(@value.gsub(/[^\d,\.]/, ''))
+      elsif @value.is_a?(Integer)
+        BigDecimal.new(@value.to_s)
       else
         raise ActsAsRepository::TypeCastError.new("can't cast #{@value} to a BigDecimal")
       end
