@@ -12,6 +12,12 @@ module ActsAsRepository
         else
           raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to String")
         end
+      when "Symbol"
+        if @value.respond_to?(:to_sym)
+          @value.to_sym
+        else
+          raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to Symbol")
+        end
       when "Integer"
         if @value.respond_to?(:to_i)
           @value.to_i
