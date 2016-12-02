@@ -18,6 +18,24 @@ module ActsAsRepository
         else
           raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to Symbol")
         end
+      when "Time"
+        if @value.respond_to?(:to_time)
+          @value.to_time
+        else
+          raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to Time")
+        end
+      when "Date"
+        if @value.respond_to?(:to_date)
+          @value.to_date
+        else
+          raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to Date")
+        end
+      when "DateTime"
+        if @value.respond_to?(:to_datetime)
+          @value.to_datetime
+        else
+          raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to DateTime")
+        end
       when "JSON"
         if @value.respond_to?(:to_json)
           @value.to_json
