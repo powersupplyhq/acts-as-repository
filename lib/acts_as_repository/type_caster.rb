@@ -18,6 +18,12 @@ module ActsAsRepository
         else
           raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to Symbol")
         end
+      when "JSON"
+        if @value.respond_to?(:to_json)
+          @value.to_json
+        else
+          raise ActsAsRepository::TypeCastError.new("cant cast an instance of #{@value.class} to JSON")
+        end
       when "Integer"
         if @value.respond_to?(:to_i)
           @value.to_i
